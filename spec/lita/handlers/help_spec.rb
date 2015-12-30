@@ -68,14 +68,16 @@ describe Lita::Handlers::Help, lita_handler: true do
 
       before { registry.register_handler(secret_handler_class) }
 
-      it "doesn't show help for commands the user doesn't have access to" do
+      it "shows the unauthorized message for commands the user doesn't have access to" do
         send_command("help")
-        expect(replies.last).not_to include("secret")
+        expect(replies.last).to include("secret")
+        expect(replies.last).to include("Unauthorized")
       end
 
-      it "shows help for restricted routes if the user has access" do
+      it "omits the unauthorized message if the user has access" do
         send_command("help", as: authorized_user)
         expect(replies.last).to include("secret")
+        expect(replies.last).not_to include("Unauthorized")
       end
     end
   end

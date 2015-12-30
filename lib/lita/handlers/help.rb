@@ -37,9 +37,9 @@ module Lita
 
           handler.routes.map do |route|
             route.help.map do |command, description|
-              if authorized?(response.user, route.required_groups)
-                help_command(route, command, description)
-              end
+              string = help_command(route, command, description)
+              string << t("help.unauthorized") unless authorized?(response.user, route.required_groups)
+              string
             end
           end
         end.flatten.compact
