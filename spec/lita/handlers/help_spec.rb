@@ -13,17 +13,40 @@ describe Lita::Handlers::Help, lita_handler: true do
       end
     end
 
-    it "sends help information for all commands" do
-      send_command("help")
-      expect(replies.last).to match(
-        /#{robot.mention_name}: help.+#{robot.mention_name}: help COMMAND/m
-      )
+    context "when no alias is defined" do
+      before do
+        allow(robot.config.robot).to receive(:alias).and_return(nil)
+      end
+
+      it "sends help information for all commands" do
+        send_command("help")
+        expect(replies.last).to match(
+          /#{robot.mention_name}: help.+#{robot.mention_name}: help COMMAND/m
+        )
+      end
+
+      it "sends help information for commands starting with COMMAND" do
+        send_command("help help COMMAND")
+        expect(replies.last).to match(/#{robot.mention_name}: help COMMAND - Lists/)
+        expect(replies.last).not_to match(/help - Lists/)
+      end
     end
 
-    it "sends help information for commands starting with COMMAND" do
-      send_command("help help COMMAND")
-      expect(replies.last).to match(/help COMMAND - Lists/)
-      expect(replies.last).not_to match(/help - Lists/)
+    context "when an alias is defined" do
+      before do
+        allow(robot.config.robot).to receive(:alias).and_return("!")
+      end
+
+      it "sends help information for all commands" do
+        send_command("help")
+        expect(replies.last).to match(/!help.+!help COMMAND/m)
+      end
+
+      it "sends help information for commands starting with COMMAND" do
+        send_command("help help COMMAND")
+        expect(replies.last).to match(/!help COMMAND - Lists/)
+        expect(replies.last).not_to match(/help - Lists/)
+      end
     end
 
     it "doesn't crash if a handler doesn't have routes" do

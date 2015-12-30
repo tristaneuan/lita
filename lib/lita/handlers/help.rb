@@ -50,7 +50,7 @@ module Lita
         filter = response.matches[0][0]
 
         if filter
-          output.select { |line| /(?:@?#{name}[:,]?)?#{filter}/i === line }
+          output.select { |line| /(?:@?#{address})?#{filter}/i === line }
         else
           output
         end
@@ -58,11 +58,16 @@ module Lita
 
       # Formats an individual command's help message.
       def help_command(route, command, description)
-        command = "#{name}: #{command}" if route.command?
+        command = "#{address}#{command}" if route.command?
         "#{command} - #{description}"
       end
 
       # The way the bot should be addressed in order to trigger a command.
+      def address
+        robot.config.robot.alias || "#{name}: "
+      end
+
+      # Fallback in case no alias is defined.
       def name
         robot.config.robot.mention_name || robot.config.robot.name
       end
