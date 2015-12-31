@@ -1,5 +1,4 @@
 require "i18n"
-#require "ostruct"
 require "rubygems"
 
 require_relative "../callback"
@@ -113,12 +112,8 @@ module Lita
         "lita#{name.split('::').last.gsub(/([A-Z])/, '-\1').downcase}"
       end
 
-      # TODO: This is really hacky
       def gem
-        #Gem::Specification::load(File.join(template_root, "..", "#{gem_name}.gemspec"))
         Gem.loaded_specs[gem_name]
-      #rescue Lita::MissingTemplateRootError
-      #  OpenStruct.new
       end
 
       private

@@ -7,23 +7,27 @@ module Lita
     class Help
       extend Handler::ChatRouter
 
-      route(/^help\s*(.+)?/, :help, command: true, help: {
-        "help" => t("help.help_value"),
-        t("help.help_command_key") => t("help.help_command_value")
-      })
+      route(
+        /^help\s*((?<handler>\S+)\s*(?<substring>.+)?)?/i,
+        :help, command: true, help: {
+          "help" => t("help.help_value"),
+          t("help.help_handler_key") => t("help.help_handler_value"),
+          t("help.help_command_key") => t("help.help_command_value")
+        }
+      )
 
       # Outputs help information about Lita commands.
       # @param response [Response] The response object.
       # @return [void]
       def help(response)
-        # TODO: Respond with list of handlers unless argument specified; show help for specified handler in that case
-        topic = response.matches[0][0]
-        return response.reply_privately(list_handlers.join("\n")) if topic.nil?
+        handler = response.match_data["handler"]
+        return response.reply_privately(
+          t("help.info", address: address) + "\n" + list_handlers.join("\n")
+        ) if handler.nil?
 
-        #output = build_help(response)
-        #output = filter_help(output, response)
-        #response.reply_privately output.join("\n")
-        response.reply_privately(list_commands(topic, response.user).join("\n"))
+        substring = response.match_data["substring"]
+        output = list_commands(handler, substring, response.user)
+        response.reply_privately(output.join("\n"))
       end
 
       private
@@ -35,45 +39,39 @@ module Lita
         end
       end
 
-      # # Creates an array of help info for all registered routes.
-      # def build_help(response)
-
+      # Creates an array containing the names (and descriptions if applicable)
+      # of all installed handlers.
       def list_handlers
         robot.handlers.map do |handler|
           next unless handler.respond_to?(:routes)
 
           string = "#{handler.name.split('::').last}"
-          #string << ": #{handler.gem.description}" unless handler.gem.description.nil?
           string << ": #{handler.gem.description}" unless handler.gem.nil?
-
           string
         end.flatten.compact
       end
 
-      def list_commands(topic, user)
-        handlers = robot.handlers.select { |handler| handler.name.split('::').last.downcase == topic.strip.downcase }
-        return "No matching help topics found for #{topic}" if handlers.empty?
-        handlers.map do |handler|
+      # Creates an array of help info for a specified handler. Optionally
+      # filters commands matching a given substring.
+      def list_commands(handler_name, substring, user)
+        handlers = robot.handlers.select { |handler| handler.name.split('::').last.downcase == handler_name.strip.downcase }
+        return ["No matching handlers found for '#{handler_name}'"] if handlers.empty?
+        output = handlers.map do |handler|
           handler.routes.map do |route|
             route.help.map do |command, description|
-              #string << "\n#{help_command(route, command, description)}"
               string = help_command(route, command, description)
               string << t("help.unauthorized") unless authorized?(user, route.required_groups)
               string
             end
           end
-        end
+        end.flatten
+        filter_help(output, substring)
       end
 
       # Filters the help output by an optional command.
-      def filter_help(output, response)
-        filter = response.matches[0][0]
-
-        if filter
-          output.select { |line| /(?:@?#{address})?#{filter}/i === line }
-        else
-          output
-        end
+      def filter_help(output, substring)
+        return output if substring.nil?
+        output.select { |line| /(?:@?#{address})?#{substring}/i === line }
       end
 
       # Formats an individual command's help message.
