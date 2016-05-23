@@ -72,13 +72,6 @@ module Lita
         routes.map do |route|
           next unless route_applies?(route, message, robot)
           log_dispatch(route)
-          robot.trigger(
-            :message_dispatched,
-            handler: self,
-            route: route,
-            message: message,
-            robot: robot
-          )
           dispatch_to_route(route, robot, message)
           true
         end.any?
@@ -95,6 +88,13 @@ module Lita
         robot.hooks[:trigger_route].each { |hook| hook.call(response: response, route: route) }
         handler = new(robot)
         route.callback.call(handler, response)
+        robot.trigger(
+          :message_dispatched,
+          handler: self,
+          route: route,
+          message: message,
+          robot: robot
+        )
       rescue => error
         log_error(robot, error)
       end
