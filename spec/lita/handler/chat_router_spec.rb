@@ -111,6 +111,7 @@ describe handler, lita_handler: true do
     end
 
     it "triggers a message_dispatched event" do
+      expect(robot).to receive(:trigger).with(:message_received, anything)
       expect(robot).to receive(:trigger).with(:message_dispatched, anything)
       send_message("message")
     end
