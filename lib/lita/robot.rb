@@ -63,6 +63,8 @@ module Lita
     # @param message [Lita::Message] The incoming message.
     # @return [void]
     def receive(message)
+      trigger(:message_received, message: message)
+
       matched = handlers.map do |handler|
         next unless handler.respond_to?(:dispatch)
 
