@@ -54,11 +54,18 @@ module Lita
       default: false,
       desc: "Kill existing Lita processes when starting the daemon",
       type: :boolean
+    option :load_group,
+      aliases: "-g",
+      banner: "GROUP",
+      default: "",
+      desc: "Additional Bundler group to load automatically"
     # Starts Lita.
     # @return [void]
     def start
       begin
-        Bundler.require
+        groups = [:default]
+        groups << options[:load_group] if options[:load_group] != ""
+        Bundler.require(*groups)
       rescue Bundler::GemfileNotFound
         say I18n.t("lita.cli.no_gemfile_warning"), :red
         abort
